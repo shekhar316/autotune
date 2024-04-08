@@ -3,10 +3,7 @@ package com.autotune.database.dao;
 import com.autotune.analyzer.kruizeObject.KruizeObject;
 import com.autotune.analyzer.utils.AnalyzerConstants;
 import com.autotune.common.data.ValidationOutputData;
-import com.autotune.database.table.KruizeExperimentEntry;
-import com.autotune.database.table.KruizePerformanceProfileEntry;
-import com.autotune.database.table.KruizeRecommendationEntry;
-import com.autotune.database.table.KruizeResultsEntry;
+import com.autotune.database.table.*;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -26,6 +23,9 @@ public interface ExperimentDAO {
 
     // Add Performance Profile  to DB
     public ValidationOutputData addPerformanceProfileToDB(KruizePerformanceProfileEntry kruizePerformanceProfileEntry);
+
+    // Add DataSource to DB
+    ValidationOutputData addDataSourceToDB(KruizeDataSource kruizeDataSource);
 
     // Update experiment status
     public boolean updateExperimentStatus(KruizeObject kruizeObject, AnalyzerConstants.ExperimentStatus status);
@@ -48,6 +48,9 @@ public interface ExperimentDAO {
     // Load a single experiment based on experimentName
     List<KruizeExperimentEntry> loadExperimentByName(String experimentName) throws Exception;
 
+    // Load a single data source based on name
+    List<KruizeDataSource> loadDataSourceByName(String name) throws Exception;
+
     // Load all results for a particular experimentName
 
     List<KruizeResultsEntry> loadResultsByExperimentName(String experimentName, String cluster_name, Timestamp interval_start_time, Timestamp interval_end_time) throws Exception;
@@ -69,5 +72,17 @@ public interface ExperimentDAO {
     void deletePartitions(int thresholdDaysCount);
 
     public void addPartitions(String tableName, String month, String year, int dayOfTheMonth, String partitionType) throws Exception;
+
+    // Load all the datasources
+    List<KruizeDataSource> loadAllDataSources() throws Exception;
+
+    // Load data source cluster group by name
+    List<KruizeMetadata> loadDataSourceClusterGroupByName(String clusterGroupName) throws Exception;
+
+    // add metadata
+    ValidationOutputData addMetadataToDB(KruizeMetadata kruizeMetadata);
+
+    // Load metadata
+    List<KruizeMetadata> loadMetadata() throws Exception;
 
 }

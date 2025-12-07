@@ -122,8 +122,8 @@ public class DataSourceMetadataOperator {
      *                                                                                                                                                                                                                                                                                 need to further enhance updateDataSourceMetadata() to support namespace, workload level granular updates
      */
     public DataSourceMetadataInfo updateDataSourceMetadata(String metadataProfileName,DataSourceInfo dataSourceInfo, String uniqueKey, long startTime,
-                                                           long endTime, int steps, int measurementDuration, Map<String, String> includeResources,
-                                                           Map<String, String> excludeResources) throws Exception {
+            long endTime, int steps, int measurementDuration, Map<String, String> includeResources,
+            Map<String, String> excludeResources) throws Exception {
         return processQueriesAndPopulateDataSourceMetadataInfo(metadataProfileName, dataSourceInfo, uniqueKey, startTime,
                 endTime, steps, measurementDuration, includeResources, excludeResources);
     }
@@ -168,8 +168,8 @@ public class DataSourceMetadataOperator {
      * todo rename processQueriesAndFetchClusterMetadataInfo
      */
     public DataSourceMetadataInfo processQueriesAndPopulateDataSourceMetadataInfo(String metadataProfileName, DataSourceInfo dataSourceInfo, String uniqueKey,
-                                                                                  long startTime, long endTime, int steps, int measurementDuration,
-                                                                                  Map<String, String> includeResources,
+            long startTime, long endTime, int steps, int measurementDuration,
+            Map<String, String> includeResources,
                                                                                   Map<String, String> excludeResources) throws IOException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         DataSourceMetadataHelper dataSourceDetailsHelper = new DataSourceMetadataHelper();
         /**
@@ -194,13 +194,26 @@ public class DataSourceMetadataOperator {
         MetadataProfile metadataProfile = MetadataProfileCollection.getInstance().getMetadataProfileCollection().get(metadataProfileName);
 
         // Populate filters for each field
+        // Populate filters for each field
+        Map<String, String> filters = new HashMap<>();
         fields.forEach(field -> {
             String includeRegex = includeResources.getOrDefault(field + "Regex", "");
             String excludeRegex = excludeResources.getOrDefault(field + "Regex", "");
-            String filter = constructDynamicFilter(field, includeRegex, excludeRegex);
-            String queryTemplate = getQueryTemplate(field, metadataProfile); // Helper to map fields to PromQL queries
-            queries.put(field, String.format(queryTemplate, filter));
+            filters.put(field, constructDynamicFilter(field, includeRegex, excludeRegex));
         });
+
+        // Helper to map fields to PromQL queries and chain filters
+        // Namespace query only needs namespace filter
+        queries.put("namespace",
+                String.format(getQueryTemplate("namespace", metadataProfile), filters.get("namespace")));
+
+        // Workload query needs namespace and workload filters
+        queries.put("workload", String.format(getQueryTemplate("workload", metadataProfile),
+                filters.get("namespace") + "," + filters.get("workload")));
+
+        // Container query needs namespace, workload, and container filters
+        queries.put("container", String.format(getQueryTemplate("container", metadataProfile),
+                filters.get("namespace") + "," + filters.get("workload") + "," + filters.get("container")));
 
         // Construct queries
         String namespaceQuery = queries.get("namespace");
@@ -219,9 +232,12 @@ public class DataSourceMetadataOperator {
             containerQuery = containerQuery.replace(KruizeConstants.KRUIZE_BULK_API.ADDITIONAL_LABEL, "");
         }
 
-        namespaceQuery = namespaceQuery.replace(AnalyzerConstants.MEASUREMENT_DURATION_IN_MIN_VARAIBLE, Integer.toString(measurementDuration));
-        workloadQuery = workloadQuery.replace(AnalyzerConstants.MEASUREMENT_DURATION_IN_MIN_VARAIBLE, Integer.toString(measurementDuration));
-        containerQuery = containerQuery.replace(AnalyzerConstants.MEASUREMENT_DURATION_IN_MIN_VARAIBLE, Integer.toString(measurementDuration));
+        namespaceQuery = namespaceQuery.replace(AnalyzerConstants.MEASUREMENT_DURATION_IN_MIN_VARAIBLE,
+                Integer.toString(measurementDuration));
+        workloadQuery = workloadQuery.replace(AnalyzerConstants.MEASUREMENT_DURATION_IN_MIN_VARAIBLE,
+                Integer.toString(measurementDuration));
+        containerQuery = containerQuery.replace(AnalyzerConstants.MEASUREMENT_DURATION_IN_MIN_VARAIBLE,
+                Integer.toString(measurementDuration));
 
         LOGGER.info("namespaceQuery: {}", namespaceQuery);
         LOGGER.info("workloadQuery: {}", workloadQuery);

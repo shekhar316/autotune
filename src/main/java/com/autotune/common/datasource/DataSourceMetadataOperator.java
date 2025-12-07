@@ -242,8 +242,15 @@ public class DataSourceMetadataOperator {
 
         // Combine filters for hierarchy
         String namespaceQueryFilter = namespaceFilter;
-        String workloadQueryFilter = namespaceFilter + "," + workloadFilter;
-        String containerQueryFilter = namespaceFilter + "," + workloadFilter + "," + containerFilter;
+        String workloadQueryFilter = namespaceFilter;
+        if (!workloadFilter.isEmpty()) {
+            workloadQueryFilter += "," + workloadFilter;
+        }
+        String containerQueryFilter = workloadQueryFilter; // Start with the accumulated workload filter (which includes
+                                                           // namespace)
+        if (!containerFilter.isEmpty()) {
+            containerQueryFilter += "," + containerFilter;
+        }
 
         // Populate queries
         queries.put("namespace", String.format(getQueryTemplate("namespace", metadataProfile), namespaceQueryFilter));

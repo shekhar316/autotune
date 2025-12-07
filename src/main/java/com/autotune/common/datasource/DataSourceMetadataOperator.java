@@ -181,6 +181,10 @@ public class DataSourceMetadataOperator {
             LOGGER.error(KruizeConstants.DataSourceConstants.DataSourceMetadataErrorMsgs.DATASOURCE_OPERATOR_RETRIEVAL_FAILURE, dataSourceInfo.getProvider());
             return null;
         }
+
+        LOGGER.info("DEBUG: includeResources map keys: {}", includeResources.keySet());
+        includeResources.forEach((k, v) -> LOGGER.info("DEBUG: includeResources key: {}, value: {}", k, v));
+
         /**
          * For the "prometheus" data source, fetches and processes data related to namespaces, workloads, and containers,
          * creating a comprehensive DataSourceMetadataInfo object that is then added to a list.
@@ -243,8 +247,9 @@ public class DataSourceMetadataOperator {
         LOGGER.info("workloadQuery: {}", workloadQuery);
         LOGGER.info("containerQuery: {}", containerQuery);
 
-        JsonArray namespacesDataResultArray = fetchQueryResults(dataSourceInfo, namespaceQuery, startTime, endTime, steps);
-        LOGGER.debug("namespacesDataResultArray: {}", namespacesDataResultArray);
+        JsonArray namespacesDataResultArray = fetchQueryResults(dataSourceInfo, namespaceQuery, startTime, endTime,
+                steps);
+        LOGGER.info("namespacesDataResultArray: {}", namespacesDataResultArray);
         if (!op.validateResultArray(namespacesDataResultArray)) {
             dataSourceMetadataInfo = dataSourceDetailsHelper.createDataSourceMetadataInfoObject(dataSourceName, null);
         } else {
@@ -252,9 +257,11 @@ public class DataSourceMetadataOperator {
              * Key: Name of namespace
              * Value: DataSourceNamespace object corresponding to a namespace
              */
-            HashMap<String, DataSourceNamespace> datasourceNamespaces = dataSourceDetailsHelper.getActiveNamespaces(namespacesDataResultArray);
-            LOGGER.debug("datasourceNamespaces: {}", datasourceNamespaces.keySet());
-            dataSourceMetadataInfo = dataSourceDetailsHelper.createDataSourceMetadataInfoObject(dataSourceName, datasourceNamespaces);
+            HashMap<String, DataSourceNamespace> datasourceNamespaces = dataSourceDetailsHelper
+                    .getActiveNamespaces(namespacesDataResultArray);
+            LOGGER.info("datasourceNamespaces: {}", datasourceNamespaces.keySet());
+            dataSourceMetadataInfo = dataSourceDetailsHelper.createDataSourceMetadataInfoObject(dataSourceName,
+                    datasourceNamespaces);
 
             /**
              * Outer map:
@@ -266,8 +273,9 @@ public class DataSourceMetadataOperator {
              * TODO -  get workload metadata for a given namespace
              */
             HashMap<String, HashMap<String, DataSourceWorkload>> datasourceWorkloads = new HashMap<>();
-            JsonArray workloadDataResultArray = fetchQueryResults(dataSourceInfo, workloadQuery, startTime, endTime, steps);
-            LOGGER.debug("workloadDataResultArray: {}", workloadDataResultArray);
+            JsonArray workloadDataResultArray = fetchQueryResults(dataSourceInfo, workloadQuery, startTime, endTime,
+                    steps);
+            LOGGER.info("workloadDataResultArray: {}", workloadDataResultArray);
 
             if (op.validateResultArray(workloadDataResultArray)) {
                 datasourceWorkloads = dataSourceDetailsHelper.getWorkloadInfo(workloadDataResultArray);
@@ -287,7 +295,7 @@ public class DataSourceMetadataOperator {
             HashMap<String, HashMap<String, DataSourceContainer>> datasourceContainers = new HashMap<>();
             JsonArray containerDataResultArray = fetchQueryResults(dataSourceInfo, containerQuery, startTime, endTime, steps);
 
-            LOGGER.debug("containerDataResultArray: {}", containerDataResultArray);
+            LOGGER.info("containerDataResultArray: {}", containerDataResultArray);
 
             if (op.validateResultArray(containerDataResultArray)) {
                 datasourceContainers = dataSourceDetailsHelper.getContainerInfo(containerDataResultArray);
@@ -348,7 +356,7 @@ public class DataSourceMetadataOperator {
             );
         }
 
-        LOGGER.debug("MetricsUrl: {}", metricsUrl);
+        LOGGER.info("MetricsUrl: {}", metricsUrl);
         client.setBaseURL(metricsUrl);
         JSONObject genericJsonObject = client.fetchMetricsJson(KruizeConstants.APIMessages.GET, "");
         JsonObject jsonObject = new Gson().fromJson(genericJsonObject.toString(), JsonObject.class);

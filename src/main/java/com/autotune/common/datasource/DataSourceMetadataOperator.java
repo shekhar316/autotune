@@ -203,7 +203,11 @@ public class DataSourceMetadataOperator {
         fields.forEach(field -> {
             String includeRegex = includeResources.getOrDefault(field + "Regex", "");
             String excludeRegex = excludeResources.getOrDefault(field + "Regex", "");
-            filters.put(field, constructDynamicFilter(field, includeRegex, excludeRegex));
+            LOGGER.info("Processing field: {}, includeRegex: '{}', excludeRegex: '{}'", field, includeRegex,
+                    excludeRegex);
+            String filter = constructDynamicFilter(field, includeRegex, excludeRegex);
+            LOGGER.info("Constructed filter for field {}: {}", field, filter);
+            filters.put(field, filter);
         });
 
         // Helper to map fields to PromQL queries and chain filters
